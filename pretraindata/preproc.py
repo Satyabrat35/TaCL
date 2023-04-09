@@ -78,11 +78,3 @@ def process_corpus(dataset, stop_prefix_list):
         all_doc_list += [sentence_list]
     p.finish()
     return all_doc_list
-
-
-
-
-
-
-
-
