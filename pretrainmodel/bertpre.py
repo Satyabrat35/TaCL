@@ -22,10 +22,14 @@ class BERTContrastivePretraining(nn.Module):
         self.embed_dim = self.config.hidden_size
         self.loss_fact = CrossEntropyLoss()
         self.sim = sim
+        # change sim to dot product for improvements
         self.temperature = temperature
         self.use_contrastive_loss = use_contrastive_loss
         if self.use_contrastive_loss:
-            pass
+            self.teacher = BertModel.from_pretrained(model_name)
+            for param in self.teacher.parameters():
+                param.requires_grad = False
+
 
     def save_model(self, spath):
         if os.path.exists(spath):
@@ -35,5 +39,20 @@ class BERTContrastivePretraining(nn.Module):
         self.bert.save_pretrained(spath)
         self.tokenizer.save_pretrained(spath)
 
-    def teacher_rep(self, inputs, tokenizer_id, attention_mask):
-        pass
+    def compute_teacher_rep(self, inputs, tokenizer_id, attention_mask):
+        batch_size, seq_len = inputs.size()
+        outputs = self.teacher(input_ids=inputs, token_type_ids=tokenizer_id, attention_mask=attention_mask)
+        reprens, pool_output = outputs[0], outputs[1]
+        reprens = reprens.view(batch_size, seq_len, self.embed_dim)
+        logits, sen_rel_scores = self.cls(reprens, pool_output)
+        return reprens, logits, sen_rel_scores
+
+    def compute_rep(self, inputs, tokenizer_id, attention_mask):
+        batch_size, seq_len = inputs.size()
+        outputs = self.bert(input_ids=inputs, token_type_ids=tokenizer_id, attention_mask=attention_mask)
+        reprens, pool_output = outputs[0], outputs[1]
+        reprens = reprens.view(batch_size, seq_len, self.embed_dim)
+        logits, sen_rel_scores = self.cls(reprens, pool_output)
+        return reprens, logits, sen_rel_scores
+
+
