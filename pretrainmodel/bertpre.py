@@ -55,4 +55,37 @@ class BERTContrastivePretraining(nn.Module):
         logits, sen_rel_scores = self.cls(reprens, pool_output)
         return reprens, logits, sen_rel_scores
 
+# understand this one
+    def compute_loss(self, truth, mask, logits):
+        truth = truth.transpose(0,1)
+        mask = mask.transpose(0,1)
+        y_mlm = logits.transpose(0, 1).masked_select(mask.unsqueeze(-1).to(torch.bool))
+        y_mlm = y_mlm.view(-1, self.vocab_size)
+        gold = truth.masked_select(mask.to(torch.bool))
+        log_probs_mlm = torch.log_softmax(y_mlm, -1)
+        mlm_loss = F.nll_loss(log_probs_mlm, gold, reduction='mean')
+        _, pred_mlm = log_probs_mlm.max(-1)
+        mlm_correct_num = torch.eq(pred_mlm, gold).float().sum().item()
+        return mlm_loss, mlm_correct_num
+
+    def forward(self, truth, input, seg, mask, attn_mask, labels, contrastive_labels, nxt_snt_flag):
+        if torch.cuda.is_available():
+            cuda = True
+        else:
+            cuda = False
+        bsz, seqlen = truth.size()
+        masked_rep, logits, sen_relation_scores = self.compute_rep(inputs=input, tokenizer_id=seg, attention_mask=attn_mask)
+        mlm_loss, mlm_correct_num = self.compute_loss(truth, mask, logits)
+        if self.use_contrastive_loss:
+            truth_rep, truth_logits, _ = self.compute_teacher_rep(inputs=truth, tokenizer_id=seg, attention_mask=attn_mask)
+            ''' 
+                            mask_rep, truth_rep : hidden_size
+                            rep, left_rep, right_rep: bsz x seqlen x embed_dim
+            '''
+            masked_rep = masked_rep / masked_rep.norm(dim=2, keepdim=True)
+            truth_rep = truth_rep / truth_rep.norm(dim=2, keepdim=True)
+            contrastive_scores = torch.matmul(masked_rep, truth_rep.T) / self.temperature
+            assert contrastive_scores.size() == torch.Size([bsz, seqlen, seqlen]) # lets see
+
+
 
