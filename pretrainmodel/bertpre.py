@@ -12,6 +12,11 @@ import argparse
 from transformers import BertForPreTraining, BertTokenizer, BertConfig, BertModel
 from torch.nn import CrossEntropyLoss
 
+
+def nll_loss(contrastive_scores, contrastive_labels):
+    pass
+
+
 class BERTContrastivePretraining(nn.Module):
     def __int__(self, model_name, sim='cosine', temperature=0.02, use_contrastive_loss=False):
         self.tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -70,9 +75,9 @@ class BERTContrastivePretraining(nn.Module):
 
     def forward(self, truth, input, seg, mask, attn_mask, labels, contrastive_labels, nxt_snt_flag):
         if torch.cuda.is_available():
-            cuda = True
+            is_cuda = True
         else:
-            cuda = False
+            is_cuda = False
         bsz, seqlen = truth.size()
         masked_rep, logits, sen_relation_scores = self.compute_rep(inputs=input, tokenizer_id=seg, attention_mask=attn_mask)
         mlm_loss, mlm_correct_num = self.compute_loss(truth, mask, logits)
@@ -86,6 +91,37 @@ class BERTContrastivePretraining(nn.Module):
             truth_rep = truth_rep / truth_rep.norm(dim=2, keepdim=True)
             contrastive_scores = torch.matmul(masked_rep, truth_rep.T) / self.temperature
             assert contrastive_scores.size() == torch.Size([bsz, seqlen, seqlen]) # lets see
+            contrastive_loss, correct_constrative_num, total_contrastive_num = nll_loss(contrastive_scores, contrastive_labels)
+
+        if correct_contrastive_num == None:
+            correct_contrastive_num = 0.0
+        if total_contrastive_num == None:
+            total_contrastive_num = 1.0
+
+        if is_cuda:
+            next_snt_flag = next_snt_flag.type(torch.LongTensor).cuda()
+        else:
+            next_snt_flag = next_snt_flag.type(torch.LongTensor)
+
+        next_snt_loss = self.loss_fact(sen_relation_scores.view(-1,2), nxt_snt_flag.view(-1))
+        if self.use_contrastive_loss:
+            total_loss = mlm_loss + next_snt_loss + contrastive_loss
+        else:
+            total_loss = mlm_loss + next_snt_loss
+
+        next_snt_log_probs = torch.log_softmax(sen_relation_scores, dim=-1)
+        next_snt_preds = torch.argmax(next_snt_log_probs, dim=-1) # check here ..
+        next_snt_correct = torch.eq(next_snt_preds, next_snt_flag.view(-1)).float().sum().item()
+        tot_tokens = mask.float().sum().item()
+
+        if is_cuda:
+            return total_loss, torch.Tensor([mlm_correct_num]).cuda(), torch.Tensor([tot_tokens]).cuda(), \
+                torch.Tensor([next_snt_correct]).cuda(), torch.Tensor([correct_contrastive_num]).cuda(), \
+                torch.Tensor([total_contrastive_num]).cuda()
+        else:
+            return total_loss, torch.Tensor([mlm_correct_num]), torch.Tensor([tot_tokens]), \
+                torch.Tensor([next_snt_correct]), torch.Tensor([correct_contrastive_num]), \
+                torch.Tensor([total_contrastive_num])
 
 
 

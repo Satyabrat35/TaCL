@@ -22,3 +22,5 @@ Pre-training BERT Model for Contrastive Learning
   biburl    = {https://dblp.org/rec/journals/corr/abs-2111-04198.bib},
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }```
+
+Reference for creating Basic Tokenizer - https://github.com/jcyk/BERT
