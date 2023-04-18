@@ -104,13 +104,68 @@ def truncate_seq_pairs(token_a, token_b, max_tokens):
         else:
             trunc_tokens.pop()
 
+# revisit
 def create_instance_from_document(all_documents, document_index, max_seq_len, short_seq_prob=0.1):
     """Creates `TrainingInstance`s for a single document."""
     document = all_documents[document_index]
-    # Account for [CLS], [SEP], [SEP]
+    # Accounts for [CLS], [SEP], [SEP]
     max_num_tokens = max_seq_len - 3
     target_seq_length = max_num_tokens
     if random.random() < short_seq_prob:
         target_seq_length = random.randint(2, max_num_tokens)
 
-    pass
+    instances = []
+    current_chunk = []
+    current_length = 0
+    i = 0
+    while i < len(document):
+        segment = document[i]
+        current_chunk.append(segment)
+        current_length += len(segment)
+        if i == len(document) - 1 or current_length >= target_seq_length:
+            if current_chunk:
+                a_end = 1
+                if len(current_chunk) >= 2:
+                    a_end = random.randint(1, len(current_chunk) - 1)
+
+                tokens_a = []
+                for j in range(a_end):
+                    tokens_a.extend(current_chunk[j])
+
+                tokens_b = []
+                # Random next
+                is_random_next = False
+                if len(current_chunk) == 1 or random.random() < 0.5:
+                    is_random_next = True
+                    target_b_length = target_seq_length - len(tokens_a)
+
+                    # check for random doc index
+                    for _ in range(10):
+                        random_document_index = random.randint(0, len(all_documents) - 1)
+                        if random_document_index != document_index:
+                            break
+
+                    random_document = all_documents[random_document_index]
+                    random_start = random.randint(0, len(random_document) - 1)
+                    for j in range(random_start, len(random_document)):
+                        tokens_b.extend(random_document[j])
+                        if len(tokens_b) >= target_b_length:
+                            break
+                    num_unused_segments = len(current_chunk) - a_end
+                    i -= num_unused_segments
+
+                else:
+                    is_random_next = False
+                    for j in range(a_end, len(current_chunk)):
+                        tokens_b.extend(current_chunk[j])
+                truncate_seq_pairs(tokens_a, tokens_b, max_num_tokens)
+
+                assert len(tokens_a) >= 1
+                assert len(tokens_b) >= 1
+                instance = (tokens_a, tokens_b, is_random_next)
+                instances.append(instance)
+            current_chunk = []
+            current_length = 0
+        i += 1
+
+    return instances
