@@ -11,11 +11,3 @@ if __name__ == '__main__':
             for sen in doc:
                 o.writelines(sen + '\n')
             o.writelines('\n')
-
-    # write example data
-    out_f = r'./english_wiki_20k_lines.txt'
-    with open('./english_wiki.txt', 'r', encoding = 'utf8') as i:
-        with open(out_f, 'w', encoding = 'utf8') as o:
-            lines = i.readlines()[:20000]
-            for l in lines:
-                o.writelines(l)
