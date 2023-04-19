@@ -13,9 +13,22 @@ from transformers import BertForPreTraining, BertTokenizer, BertConfig, BertMode
 from torch.nn import CrossEntropyLoss
 
 
-def nll_loss(contrastive_scores, contrastive_labels):
-    pass
+def label_nll_loss(contrastive_scores, contrastive_labels):
+    bsz, seqlen, _ = contrastive_scores.size()
+    logprobs = F.log_softmax(contrastive_scores.view(-1, seqlen), dim=-1)
+    gold = torch.arange(seqlen).view(-1, )
+    gold = gold.expand(bsz, seqlen).contiguous().view(-1)
+    if contrastive_scores.is_cuda:
+        gold = gold.cuda(contrastive_scores.get_device())
+    loss = -logprobs.gather(dim=-1, index=gold.unsqueeze(1)).squeeze(1)
+    loss = loss.view(bsz, seqlen) * contrastive_labels
+    loss = torch.sum(loss) / contrastive_labels.sum()
 
+    _, pred = torch.max(logprobs, -1)
+    correct_num = torch.eq(gold, pred).float().view(bsz, seqlen)
+    correct_num = torch.sum(correct_num * contrastive_labels)
+    total_num = contrastive_labels.sum()
+    return loss, correct_num, total_num
 
 class BERTContrastivePretraining(nn.Module):
     def __int__(self, model_name, sim='cosine', temperature=0.02, use_contrastive_loss=False):
@@ -91,7 +104,7 @@ class BERTContrastivePretraining(nn.Module):
             truth_rep = truth_rep / truth_rep.norm(dim=2, keepdim=True)
             contrastive_scores = torch.matmul(masked_rep, truth_rep.T) / self.temperature
             assert contrastive_scores.size() == torch.Size([bsz, seqlen, seqlen]) # lets see
-            contrastive_loss, correct_constrative_num, total_contrastive_num = nll_loss(contrastive_scores, contrastive_labels)
+            contrastive_loss, correct_contrastive_num, total_contrastive_num = label_nll_loss(contrastive_scores, contrastive_labels)
 
         if correct_contrastive_num == None:
             correct_contrastive_num = 0.0
