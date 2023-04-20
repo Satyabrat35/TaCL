@@ -16,7 +16,7 @@ class PretrainCorpus(object):
         self.tokenizer = tokenizer
         self.vocab_size = self.tokenizer.vocab_size
         self.special_id_token_list = self.tokenizer.convert_tokens_to_ids([UNK, CLS, SEP, PAD, MASK])
-        self.unk_id, self.sep_id, self.pad_id, self.cls_id, self.mask_id = self.special_token_id_list
+        self.unk_id, self.sep_id, self.pad_id, self.cls_id, self.mask_id = self.special_id_token_list
         self.max_len = max_len
         self.filename = filename
         self.stream = open(self.filename, encoding='utf-8')

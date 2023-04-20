@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
     if is_cuda:
         if multi_gpu:
-            model = nn.DataParallel()
+            model = nn.DataParallel(model)
         else:
             model = model.to(device)
 

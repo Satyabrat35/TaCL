@@ -32,10 +32,12 @@ def label_nll_loss(contrastive_scores, contrastive_labels):
 
 class BERTContrastivePretraining(nn.Module):
     def __int__(self, model_name, sim='cosine', temperature=0.02, use_contrastive_loss=False):
+        super(BERTContrastivePretraining, self).__init__()
         self.tokenizer = BertTokenizer.from_pretrained(model_name)
+        self.vocab_size = self.tokenizer.vocab_size
         self.model = BertForPreTraining.from_pretrained(model_name)
         self.bert = self.model.bert
-        self.vocab_size = self.tokenizer.vocab_size
+        self.cls = self.model.cls
         self.config = BertConfig.from_pretrained(model_name)
         self.embed_dim = self.config.hidden_size
         self.loss_fact = CrossEntropyLoss()
