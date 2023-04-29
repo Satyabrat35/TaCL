@@ -1,28 +1,19 @@
 # TaCL
-Pre-training BERT Model for Contrastive Learning
+Model results on SQuAD 2.0
 
-Switch Branch to squad 1 and squad 2 for SQuAD 1.1 and SQuAD 2.0 results respectively.
-
-## Reference
+## Run this script
 ```bibtex
-@article{DBLP:journals/corr/abs-2111-04198,
-  author    = {Yixuan Su and
-               Fangyu Liu and
-               Zaiqiao Meng and
-               Tian Lan and
-               Lei Shu and
-               Ehsan Shareghi and
-               Nigel Collier},
-  title     = {TaCL: Improving {BERT} Pre-training with Token-aware Contrastive Learning},
-  journal   = {CoRR},
-  volume    = {abs/2111.04198},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2111.04198},
-  eprinttype = {arXiv},
-  eprint    = {2111.04198},
-  timestamp = {Wed, 10 Nov 2021 16:07:30 +0100},
-  biburl    = {https://dblp.org/rec/journals/corr/abs-2111-04198.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
-}```
+CUDA_VISIBLE_DEVICES=0 python run_qa.py \
+  --model_name_or_path <model_dir> \
+  --dataset_name squad_v2 \
+  --do_train \
+  --do_eval \
+    --version_2_with_negative \
+  --per_device_train_batch_size 12 \
+  --learning_rate 3e-5 \
+  --num_train_epochs 2 \
+  --max_seq_length 384 \
+  --doc_stride 128 \
+  --output_dir <output_dir>
+```
 
-Reference for creating Basic Tokenizer - https://github.com/jcyk/BERT
