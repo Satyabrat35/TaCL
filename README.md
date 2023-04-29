@@ -1,26 +1,31 @@
 # TaCL
-Pre-training BERT Model for Contrastive Learning
+Model results on SQuAD 1.1
 
-## Reference
+## Run this script
 ```bibtex
-@article{DBLP:journals/corr/abs-2111-04198,
-  author    = {Yixuan Su and
-               Fangyu Liu and
-               Zaiqiao Meng and
-               Tian Lan and
-               Lei Shu and
-               Ehsan Shareghi and
-               Nigel Collier},
-  title     = {TaCL: Improving {BERT} Pre-training with Token-aware Contrastive Learning},
-  journal   = {CoRR},
-  volume    = {abs/2111.04198},
-  year      = {2021},
-  url       = {https://arxiv.org/abs/2111.04198},
-  eprinttype = {arXiv},
-  eprint    = {2111.04198},
-  timestamp = {Wed, 10 Nov 2021 16:07:30 +0100},
-  biburl    = {https://dblp.org/rec/journals/corr/abs-2111-04198.bib},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
+#!/bin/bash -l
+
+#SBATCH --output=/common/home/sb2311/PycharmProjects/TaCL/TaCL/pretrainmodel/transformers/examples/pytorch/question-answering/logfile
+
+#SBATCH -o /common/home/sb2311/PycharmProjects/TaCL/TaCL/pretrainmodel/transformers/examples/pytorch/question-answering/out1.txt
+
+
+export PATH="$PATH:/koko/system/anaconda/bin"
+
+cd /common/home/sb2311/PycharmProjects/TaCL/TaCL/pretrainmodel/transformers/examples/pytorch/question-answering
+
+source activate python39
+
+CUDA_VISIBLE_DEVICES=0 python run_qa.py \
+  --model_name_or_path <your model path> \
+  --dataset_name squad \
+  --do_train \
+  --do_eval \
+  --per_device_train_batch_size 12 \
+  --learning_rate 3e-5 \
+  --num_train_epochs 2 \
+  --max_seq_length 384 \
+  --doc_stride 128 \
+  --output_dir <your_output>
 }```
 
-Reference for creating Basic Tokenizer - https://github.com/jcyk/BERT
