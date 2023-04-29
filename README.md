@@ -1,6 +1,8 @@
 # TaCL
 Pre-training BERT Model for Contrastive Learning
 
+Switch Branch to squad 1 and squad 2 for SQuAD 1.1 and SQuAD 2.0 results respectively.
+
 ## Reference
 ```bibtex
 @article{DBLP:journals/corr/abs-2111-04198,
