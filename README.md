@@ -3,18 +3,6 @@ Model results on SQuAD 1.1
 
 ## Run this script
 ```bibtex
-#!/bin/bash -l
-
-#SBATCH --output=/common/home/sb2311/PycharmProjects/TaCL/TaCL/pretrainmodel/transformers/examples/pytorch/question-answering/logfile
-
-#SBATCH -o /common/home/sb2311/PycharmProjects/TaCL/TaCL/pretrainmodel/transformers/examples/pytorch/question-answering/out1.txt
-
-
-export PATH="$PATH:/koko/system/anaconda/bin"
-
-cd /common/home/sb2311/PycharmProjects/TaCL/TaCL/pretrainmodel/transformers/examples/pytorch/question-answering
-
-source activate python39
 
 CUDA_VISIBLE_DEVICES=0 python run_qa.py \
   --model_name_or_path <your model path> \
